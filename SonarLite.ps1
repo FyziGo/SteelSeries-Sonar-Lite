@@ -51,9 +51,8 @@ function Stop-AllSteelSeries {
 function Start-HeadlessSonar {
     Write-Host "[*] Starting SteelSeries Sonar in Headless Mode..." -ForegroundColor Cyan
     
-    # Use explorer.exe to launch fully detached from PowerShell job context
     $exePath = Join-Path $InstallDir "SteelSeriesGGEZ.exe"
-    $args = "-dataPath=`"$DataDir`" -dbEnv=production -auto=true"
+    $procArgs = "-dataPath=`"$DataDir`" -dbEnv=production -auto=true"
     
     if (-not (Test-Path $exePath)) {
         Write-Host "[!] Error: $exePath not found!" -ForegroundColor Red
@@ -62,14 +61,22 @@ function Start-HeadlessSonar {
 
     $startInfo = New-Object System.Diagnostics.ProcessStartInfo
     $startInfo.FileName = $exePath
-    $startInfo.Arguments = $args
+    $startInfo.Arguments = $procArgs
     $startInfo.WorkingDirectory = $InstallDir
     $startInfo.UseShellExecute = $true
     $startInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
     [System.Diagnostics.Process]::Start($startInfo) | Out-Null
 
-    Write-Host "[*] Waiting for services to initialize..." -ForegroundColor Gray
-    Start-Sleep -Seconds 5
+    Write-Host "[*] Waiting for services to initialize (8s)..." -ForegroundColor Gray
+    Start-Sleep -Seconds 8
+
+    # Purge any heavy Electron GUI processes that GGEZ might have accidentally spawned
+    $gui = Get-Process -Name "SteelSeriesGGClient" -ErrorAction SilentlyContinue
+    if ($gui) {
+        Write-Host "[*] Suppressing Electron UI window to keep headless mode..." -ForegroundColor Gray
+        $gui | Stop-Process -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+    }
 }
 
 function Ensure-Autorun {
@@ -139,7 +146,8 @@ function Run-PythonWorker {
     }
 
     if ($py) {
-        & $py $PythonScript $Arguments
+        $argList = @($Arguments -split '\s+' | Where-Object { $_ })
+        & $py $PythonScript @argList
     } else {
         Write-Host "[!] Python not found. Trying built-in SQLite execution..." -ForegroundColor Yellow
         # Fallback using python code embedded or error

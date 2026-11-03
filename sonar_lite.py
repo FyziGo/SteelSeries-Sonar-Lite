@@ -99,23 +99,20 @@ def apply_debloat(disable_engine=True):
         cur = conn.cursor()
 
         # Always ensure Sonar is enabled and set to auto_start
-        cur.execute("UPDATE sub_apps SET is_enabled = 1, auto_start = 1 WHERE name = 'sonar'")
+        cur.execute("UPDATE sub_apps SET is_enabled = 1, auto_start = 1 WHERE LOWER(name) = 'sonar'")
 
         # Ensure oldGG (core service needed by Sonar) is enabled
-        cur.execute("UPDATE sub_apps SET is_enabled = 1, auto_start = 1 WHERE name = 'oldGG'")
+        cur.execute("UPDATE sub_apps SET is_enabled = 1, auto_start = 1 WHERE LOWER(name) = 'oldgg'")
 
-        # Disable heavy bloat: Moments (video recording service)
-        cur.execute("UPDATE sub_apps SET is_enabled = 0, auto_start = 0 WHERE name = 'moments'")
-
-        # Disable 3D Aim Trainer and Performance Coach
-        cur.execute("UPDATE sub_apps SET is_enabled = 0, auto_start = 0 WHERE name IN ('threeDAT', 'performanceCoach')")
+        # Disable heavy bloat: Moments (video recording service), 3D Aim Trainer, Performance Coach
+        cur.execute("UPDATE sub_apps SET is_enabled = 0, auto_start = 0 WHERE LOWER(name) IN ('moments', 'threedat', 'performancecoach')")
 
         # Disable Engine if requested (mice/keyboards/Prism RGB)
         if disable_engine:
-            cur.execute("UPDATE sub_apps SET is_enabled = 0, auto_start = 0 WHERE name = 'engine'")
+            cur.execute("UPDATE sub_apps SET is_enabled = 0, auto_start = 0 WHERE LOWER(name) = 'engine'")
             print("[+] Engine (Mice/Keyboards/RGB sync) disabled for maximum lightness.")
         else:
-            cur.execute("UPDATE sub_apps SET is_enabled = 1, auto_start = 1 WHERE name = 'engine'")
+            cur.execute("UPDATE sub_apps SET is_enabled = 1, auto_start = 1 WHERE LOWER(name) = 'engine'")
             print("[+] Engine (Mice/Keyboards/RGB sync) kept ENABLED.")
 
         # Disable automatic game scanning in application_settings
