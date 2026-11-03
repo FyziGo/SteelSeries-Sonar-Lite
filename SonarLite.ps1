@@ -84,6 +84,18 @@ function Ensure-Autorun {
     $regKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
     $targetCmd = "`"$InstallDir\SteelSeriesGGEZ.exe`" -dataPath=`"$DataDir`" -dbEnv=production -auto=true"
     Set-ItemProperty -Path $regKey -Name "SteelSeriesGG" -Value $targetCmd -Force
+
+    # Ensure it is marked as Enabled in Task Manager (StartupApproved)
+    $approvedKeys = @(
+        "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
+    )
+    [byte[]]$enabledBytes = @(2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    foreach ($ak in $approvedKeys) {
+        if (Test-Path $ak) {
+            Set-ItemProperty -Path $ak -Name "SteelSeriesGG" -Value $enabledBytes -Type Binary -ErrorAction SilentlyContinue
+        }
+    }
 }
 
 function Show-ProcessStatus {
